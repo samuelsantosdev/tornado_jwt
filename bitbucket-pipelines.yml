@@ -1,0 +1,18 @@
+image: python:3.6.8
+
+pipelines:
+  tags:
+    release-*:
+      - step:
+          caches:
+            - pip
+          script:
+            - ./ci.sh prod
+  branches:
+    master:
+      - step:
+          caches:
+            - pip
+          script:
+            - ./ci.sh hml
+

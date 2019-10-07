@@ -1,37 +1,30 @@
 {
   "hml": {
       "aws_region": "us-west-2",
-      "django_settings": "planos.settings",
-      "project_name": "planos",
-      "runtime": "python3.6",
-      "s3_bucket": "test-planos-hml",
-      "apigateway_description": "API de Planos - HML",
-      "lambda_description": "API de Planos - HML",
-      "memory_size": 128,
-      "timeout_seconds": 30,
+      "project_name": "base",
+      "runtime": "python3.7",
+      "s3_bucket": "test-base-hml",
+      "apigateway_description": "API de base - HML",
+      "lambda_description": "API de base - HML",
       "log_level": "DEBUG",
       "cors": true,
       "keep_warm": false,
-      "domain": "api-hml.lucree.com.br",
-      "base_path": "planos",
+      "domain": "",
+      "base_path": "base",
       "endpoint_configuration": [
         "REGIONAL"
       ],
       "route53_enabled": false,
-      "certificate_arn": "arn:aws:acm:us-east-1:175572419266:certificate/05725bab-8c5b-406f-a18d-cd26e4c9cfe8",
+      "certificate_arn": "",
       "environment_variables": {
-          "S3_BUCKET": "swagger-static",
-          "SECRET_KEY": "_8-u5q&s11_8s4ue*s7k7zi#4bl48!$)(tlf4s5x_6nql$rmh_",
-          "AWS_S3_REGION_NAME": "us-west-2",
-          "RDS_DB_NAME": "subadiqdb1",
-          "RDS_USERNAME": "subadiqdb",
-          "RDS_PASSWORD": "1o5gHogS",
-          "RDS_HOSTNAME": "subadiq-homolog.cxmg4sq9azs9.us-west-2.rds.amazonaws.com",
-          "AWS_ACCESS_KEY_ID":"AKIASRYHOQLBNSYRW6VY",
-          "AWS_SECRET_ACCESS_KEY":"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",
-          "LOG_LEVEL": "DEBUG",
-          "JWT_EXPIRATION_MIN":"30",
-          "JWT_EXPIRATION_REFRESH_DAY":"1"
+          "RDS_DB_NAME": "",
+          "RDS_USERNAME": "",
+          "RDS_PASSWORD": "",
+          "RDS_HOSTNAME": "",
+          "WS_PORT" : "",
+          "JWT_SECRET" : "secret",
+          "JWT_ALGORITHM" : "HS256",
+          "JWT_EXP_DELTA_SECONDS" : "20"
       },
       "exclude": [
           "*.md",
@@ -45,42 +38,30 @@
       ],
       "vpc_config": {
           "SubnetIds": [
-                  "subnet-069b4cc8898ec7708",
-                  "subnet-01a2db17a3e4cc521",
-                  "subnet-0426a8959dc215581"
+                  
               ],
-          "SecurityGroupIds": [ "sg-57861622" ]
+          "SecurityGroupIds": [  ]
       },
-      "authorizer": {
-        "type": "COGNITO_USER_POOLS",
-        "provider_arns": [
-          "arn:aws:cognito-idp:us-west-2:175572419266:userpool/us-west-2_axDl475s7"
-        ]
-      }
+      
   },
   "prod": {
       "extends": "hml",
-      "memory_size": 128,
-      "timeout_seconds": 30,
-      "lambda_description": "API de Planos - Prod",
-      "apigateway_description": "API de Planos - PROD",
-      "s3_bucket": "lucree-planos-prod",
-      "domain": "api.lucree.com.br",
+      "lambda_description": "API de base - Prod",
+      "apigateway_description": "API de base - PROD",
+      "s3_bucket": "",
+      "domain": "",
       "endpoint_configuration":[
         "EDGE"
       ],
       "environment_variables": {
-          "SECRET_KEY": "_8-u5q&s11_8s4ue*s7k7zi#4bl48!$)(tlf4s5x_6nql$rmh_",
-          "S3_BUCKET": "swagger-static",
-          "AWS_S3_REGION_NAME": "us-west-2",
-          "AWS_ACCESS_KEY_ID":"AKIASRYHOQLBNSYRW6VY",
-          "AWS_SECRET_ACCESS_KEY":"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",
-          "RDS_DB_NAME": "subadiqdb1",
-          "RDS_USERNAME": "subadiqdb",
-          "RDS_PASSWORD": "SubAd1q32f",
-          "RDS_HOSTNAME": "transacsubadiq.cxmg4sq9azs9.us-west-2.rds.amazonaws.com",
-          "JWT_EXPIRATION_MIN":"30",
-          "JWT_EXPIRATION_REFRESH_DAY":"1"
+          "RDS_DB_NAME": "",
+          "RDS_USERNAME": "",
+          "RDS_PASSWORD": "",
+          "RDS_HOSTNAME": "",
+          "WS_PORT" : "",
+          "JWT_SECRET" : "secret",
+          "JWT_ALGORITHM" : "HS256",
+          "JWT_EXP_DELTA_SECONDS" : "20"
       },
       "log_level": "INFO",
       "keep_warm": true,

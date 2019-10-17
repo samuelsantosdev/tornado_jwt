@@ -3,6 +3,7 @@ import tornado.web
 import os
 from api.routes import get_routes
 from tornado_swagger.setup import setup_swagger
+import settings
 
 #def start_app():
 #    return tornado.web.Application(get_routes())
@@ -15,5 +16,5 @@ class Application(tornado.web.Application):
 
 if __name__ == "__main__":
     app = Application()
-    app.listen(os.environ.get('WS_PORT', '8080'))
+    app.listen(os.environ.get('WS_PORT', settings.MS_PORT))
     tornado.ioloop.IOLoop.current().start()

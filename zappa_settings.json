@@ -17,14 +17,14 @@
       "route53_enabled": false,
       "certificate_arn": "",
       "environment_variables": {
-          "RDS_DB_NAME": "",
-          "RDS_USERNAME": "",
-          "RDS_PASSWORD": "",
-          "RDS_HOSTNAME": "",
-          "WS_PORT" : "",
-          "JWT_SECRET" : "secret",
-          "JWT_ALGORITHM" : "HS256",
-          "JWT_EXP_DELTA_SECONDS" : "20"
+            "MS_ALLOW_ORIGIN":"*",
+            "MS_ALLOW_METHODS":"POST,GET,DELETE,PUT,PATCH,OPTIONS",
+            "MS_PORT":"8080",
+            "DB_HOST":"127.0.0.1",
+            "DB_PORT":"5432",
+            "DB_USER":"user",
+            "DB_PASS":"pass",
+            "DB_NAME":"database"
       },
       "exclude": [
           "*.md",
@@ -38,11 +38,10 @@
       ],
       "vpc_config": {
           "SubnetIds": [
-                  
+              // subnets to database etc
               ],
           "SecurityGroupIds": [  ]
-      },
-      
+      }
   },
   "prod": {
       "extends": "hml",
@@ -54,14 +53,14 @@
         "EDGE"
       ],
       "environment_variables": {
-          "RDS_DB_NAME": "",
-          "RDS_USERNAME": "",
-          "RDS_PASSWORD": "",
-          "RDS_HOSTNAME": "",
-          "WS_PORT" : "",
-          "JWT_SECRET" : "secret",
-          "JWT_ALGORITHM" : "HS256",
-          "JWT_EXP_DELTA_SECONDS" : "20"
+            "MS_ALLOW_ORIGIN":"*",
+            "MS_ALLOW_METHODS":"POST,GET,DELETE,PUT,PATCH,OPTIONS",
+            "MS_PORT":"8080",
+            "DB_HOST":"127.0.0.1",
+            "DB_PORT":"5432",
+            "DB_USER":"user",
+            "DB_PASS":"pass",
+            "DB_NAME":"database"
       },
       "log_level": "INFO",
       "keep_warm": true,

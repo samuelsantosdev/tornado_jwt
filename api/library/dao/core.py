@@ -1,10 +1,12 @@
 """ DAO AsyncPG - Samuel Santos 8-Set-2019 """
-import asyncio, asyncpg, os
+import asyncio, asyncpg, os, logging
 from api.library.dao.helper import make_where
 from api.library.dao.configs import Operations
 from typing import List
 
-loop = asyncio.get_event_loop()
+ioloop = asyncio.get_event_loop()
+asyncio.set_event_loop(ioloop)
+#logging.basicConfig(level=logging.DEBUG)
 
 # DAO asyncio and postgresql
 class DAOAsyncPG():
@@ -45,36 +47,53 @@ class DAOAsyncPG():
             if getattr(self, key) == None :
                 raise Exception("Environment variable {} is None".format(key)) 
 
-        self.__strconnection = '''postgres://{}:{}@{}:{}/{}'''.format(self.DATABASE_USER, self.DATABASE_PASSWORD, self.DATABASE_HOST, self.DATABASE_PORT, self.DATABASE_NAME)
+        taskConn = asyncpg.connect(
+            user=self.DATABASE_USER, password=self.DATABASE_PASSWORD,
+            database=self.DATABASE_NAME, host=self.DATABASE_HOST )
 
+        self.__conn = asyncio.get_event_loop().run_until_complete(taskConn)
+        
     async def connect(self):
         if self.__conn == None:
-            taskConn = loop.create_task(asyncpg.connect(self.__strconnection))
-            self.__conn = await taskConn
+            taskConn = await asyncpg.connect(
+                user=self.DATABASE_USER, password=self.DATABASE_PASSWORD,
+                database=self.DATABASE_NAME, host=self.DATABASE_HOST )
+            self.__conn = taskConn
             return self.__conn
         return self.__conn
         
-    async def close(self):
-        r = await self.__conn.close()
+    def close(self):
+        r = self.__conn.close()
         return r
 
 
 
+
+    def get_query(self):
+        if self.__action != Operations.INSERT_AND_UPDATE :
+            self.__raw_sql()
+        else:
+            self.__raw_sql_update_or_create()
+
+        return self.sql_query
+
     #*****************************************
     # basic operations on PostgreSQL
     #*****************************************
-    async def do(self):
+    def do(self):
+
+        #Criar SQL
         if self.__action != Operations.INSERT_AND_UPDATE :
-            await self.__raw_sql()
+            self.__raw_sql()
         else:
-            await self.__raw_sql_update_or_create()
+            self.__raw_sql_update_or_create()
+            
+        if self.__action in [Operations.INSERT, Operations.SELECT] :
 
-        await self.connect()
-        if self.__action == Operations.SELECT :
-            self.result_query     = await self.__conn.fetch( self.sql_query )
-
-        elif self.__action == Operations.INSERT :
-            self.result_query     = await self.__conn.fetch( self.sql_query )
+            self.result_query = asyncio.get_event_loop().run_until_complete(self.__conn.fetch( self.sql_query ))
+            
+            if self.result_query == None :
+                return None
 
             if len(self.result_query) > 1 : 
                 return [ dict(v) for v in self.result_query ]
@@ -83,23 +102,45 @@ class DAOAsyncPG():
             else: 
                 return None
             
-        if self.__action in [ Operations.UPDATE, Operations.INSERT_AND_UPDATE ] :
-            self.result_query     = await self.__conn.execute( self.sql_query )
+        elif self.__action in [ Operations.UPDATE, Operations.INSERT_AND_UPDATE ] :
+
+            self.result_query = asyncio.get_event_loop().run_until_complete(self.__conn.execute( self.sql_query ))
+            
             if self.result_query == Operations.UPDATE.value + ' 0':
                 self.result_query  = None
 
-        await self.__conn.close()
-        
         return self.result_query
         
-    async def first(self):
-        await self.do()
+    def execute_list(self, sql):
+        
+        self.result_query = asyncio.get_event_loop().run_until_complete(self.__conn.fetch( sql ))
+
+        if self.result_query == None :
+            return None
+
+        if len(self.result_query) > 0 : 
+            return dict(self.result_query[0])
+
+        return None
+
+    def execute(self, sql):
+
+        self.result_query = asyncio.get_event_loop().run_until_complete(self.__conn.fetch( sql ))
+        if len(self.result_query) > 1 : 
+            return [ dict(v) for v in self.result_query ]
+        elif len(self.result_query) == 1 : 
+            return dict(self.result_query[0])
+        else: 
+            return None
+
+    def first(self):
+        self.do()
         if len(self.result_query) > 0 : 
             return dict(self.result_query[0])
         return None
 
-    async def list(self):
-        await self.do()
+    def list(self):
+        self.do()
         if len(self.result_query) > 0 : 
             return [ dict(v) for v in self.result_query ]
         return None
@@ -133,7 +174,7 @@ class DAOAsyncPG():
         self.__order = order
         return self
 
-    def where(self, where: dict):
+    def filter(self, where: dict):
         self.__where = where
         return self
 
@@ -173,12 +214,12 @@ class DAOAsyncPG():
         self.__offset     = offset
         return self
 
-    def insert(self, *, values=None):
+    def insert(self, values=None):
         self.__action     = Operations.INSERT
         self.__values     = values
         return self
 
-    def update_or_create(self, conflicts: List[str], *, values):
+    def update_or_create(self, conflicts, values):
         self.__action     = Operations.INSERT_AND_UPDATE
         self.__values     = values
         self.__conflicts  = conflicts
@@ -190,17 +231,19 @@ class DAOAsyncPG():
     #*****************************************
     # Create SQL string
     #*****************************************
-    async def __raw_sql_update_or_create(self):
+    def __raw_sql_update_or_create(self):
 
-        _conflicts = ",".join( k for k in self.__conflicts )
+        #self.__values = filter(None, self.__values)
+
+        _conflicts = ",".join(self.__conflicts)
         if type(self.__values) == list :
-            _updates     = [ "{}='{}'".format(key, value) for key, value in self.__values[0].items() ]
+            _updates     = [ "{}=EXCLUDED.{}".format(key, key) for key, value in self.__values[0].items() ]
             _columns     = [ "{}".format(key) for key, value in self.__values[0].items() ]
-            _values_insert = ",".join([ "(" + ",".join( "'{}'".format(v) for k, v in inserts.items() ) + ")" for inserts in self.__values ])
+            _values_insert = ",".join([ "(" + ",".join( "'{}'".format(v) if v is not None else 'NULL' for k, v in inserts.items() ) + ")" for inserts in self.__values ])
         else:
-            _updates     = [ "{}='{}'".format(key, value) for key, value in self.__values.items() ]
+            _updates     = [ "{}=EXCLUDED.{}".format(key, key) for key, value in self.__values.items() ]
             _columns     = [ "{}".format(key) for key, value in self.__values.items() ]
-            _values_insert     = "(" + ",".join([ "'{}'".format(value) for key, value in self.__values.items() ]) + ")"
+            _values_insert     = "(" + ",".join([  "'{}'".format(value) if value is not None else 'NULL' for key, value in self.__values.items() ]) + ")"
 
         self.__action = Operations.INSERT_AND_UPDATE
         self.sql_query = '''INSERT INTO {} ({})
@@ -210,7 +253,7 @@ class DAOAsyncPG():
                 SET {}'''.format( self.table , ",".join(_columns), _values_insert, _conflicts, ",".join(_updates))
 
 
-    async def __raw_sql(self):
+    def __raw_sql(self):
         
         if self.__action != Operations.INSERT:
             _columns    = ",".join(self.__columns) if self.__columns != None else '*'
@@ -221,9 +264,9 @@ class DAOAsyncPG():
             
             _sql_query = ''
             
-            if self.__action == Operations.SELECT:
+            if self.__action == Operations.SELECT :
                 _sql_query  = '''{} {} FROM {} '''.format(self.__action.value, _columns, self.table )
-            elif self.__action == Operations.DELETE:
+            elif self.__action == Operations.DELETE :
                 _sql_query  = '''{} FROM {} '''.format(self.__action.value, self.table)
             elif self.__action == Operations.UPDATE :
                 _sql_query  = '''{} {} '''.format(self.__action.value, self.table)
@@ -241,10 +284,10 @@ class DAOAsyncPG():
 
             if type(self.__values) == list :
                 _columns_insert    = ",".join([ "{}".format(key) for key, value in self.__values[0].items() ])
-                _values_insert = ",".join([ "(" + ",".join( "'{}'".format(v) for k, v in inserts.items() ) + ")" for inserts in self.__values ])
+                _values_insert = ",".join([ "(" + ",".join( "'{}'".format(v) if v is not None else 'NULL' for k, v in inserts.items() ) + ")" for inserts in self.__values ])
             else:
                 _columns_insert    = ",".join([ "{}".format(key) for key, value in self.__values.items() ])
-                _values_insert     = "(" + ",".join([ "'{}'".format(value) for key, value in self.__values.items() ]) + ")"
+                _values_insert     = "(" + ",".join([ "'{}'".format(value) if value is not None else 'NULL' for key, value in self.__values.items() ]) + ")"
 
             _sql_query  = '''{} INTO {} ({}) VALUES {} '''.format(self.__action.value, self.table, _columns_insert, _values_insert)
 

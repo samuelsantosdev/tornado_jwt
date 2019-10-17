@@ -12,7 +12,7 @@ class WordsHandler(HttpHandler):
         """
         ---
         tags:
-        - Posts
+        - Welcome
         summary: Get posts details
         description: posts full version
         produces:
@@ -26,18 +26,6 @@ class WordsHandler(HttpHandler):
         responses:
             200:
               description: list of posts
-              schema:
-                $ref: '#/definitions/PostModel'
         """
-        #json_response = json.dumps({'data':['1']})
-        #senha   = User.encrypt('senha1234')
-        
-        #salt    = User.salt
-        #user    = await User().insert(values={"password":senha, "username":"user", "salt":salt}).do()
-        #json_response = user
-
-        #user    = await User().select().where(where={ "username" : "user" }).first()
-        #if User.match_password(user=user, password='senha1234') : 
-        #    token = await Authentication().get_token(user=user)
-
-        return self.response( json.dumps( { 'token' : 1 } ) )
+        response = { 'token' : 1 }
+        return self.response( response )

@@ -1,11 +1,11 @@
-from api.library.dao.core import model_asyncpg, DAOAsyncPG
+from api.library.dao.core import DAOAsyncPG
 import hashlib, binascii, random, string
 
 class User(DAOAsyncPG):
 
     salt        = None
     pk          = 'id'
-    table       = 'testes.auth_users'
+    table       = 'public.auth_users' # schema.table
 
     def __make_salt(self):
         base = ''.join(random.sample(string.ascii_lowercase, 64))

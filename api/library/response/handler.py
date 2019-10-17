@@ -1,4 +1,5 @@
 from tornado.web import RequestHandler
+import settings
 
 class HttpHandler(RequestHandler):
 
@@ -6,9 +7,9 @@ class HttpHandler(RequestHandler):
 
     def set_default_headers(self, *args, **kwargs):
 
-        self.set_header("Access-Control-Allow-Origin", "*")
+        self.set_header("Access-Control-Allow-Origin", ','.join(settings.MS_ALLOW_ORIGIN))
         self.set_header("Access-Control-Allow-Headers", "x-requested-with")
-        self.set_header("Access-Control-Allow-Methods", "POST, GET, DELETE, PUT, PATCH OPTIONS")
+        self.set_header("Access-Control-Allow-Methods", ','.join(settings.MS_ALLOW_METHODS))
         
     def response(self, json: str, status: int=200):
 

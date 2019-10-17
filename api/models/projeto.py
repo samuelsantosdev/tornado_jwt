@@ -1,8 +1,7 @@
-from api.library.dao.core import model_asyncpg
+from api.library.dao.core import DAOAsyncPG
 
-@model_asyncpg
-class Projeto():
+class Projeto(DAOAsyncPG):
     
     def __init__(self):
-        self.table   = 'projetos'
+        self.table   = 'public.words'
         self.pk      = 'id'
